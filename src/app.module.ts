@@ -3,10 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { RolePermissionsModule } from './modules/role-permissions/role-permissions.module';
+import { RoleModule } from './modules/role/role.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { UsersModule } from './modules/users/users.module';
-import { RoleModule } from './modules/role/role.module';
-import { PermissionsModule } from './modules/permissions/permissions.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -31,6 +32,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
     TenantModule,
     RoleModule,
     PermissionsModule,
+    RolePermissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
