@@ -1,9 +1,10 @@
 import { config } from 'dotenv';
 import 'reflect-metadata';
-import { UserProfile } from 'src/modules/users/entities/user_profile.entity';
 import { DataSource } from 'typeorm';
 import { Tenant } from '../modules/tenant/entities/tenant.entity';
 import { User } from '../modules/users/entities/user.entity';
+import { UserProfile } from '../modules/users/entities/user_profile.entity';
+import { UserTenants } from '../modules/users/entities/user_tenants.entity';
 
 config();
 
@@ -15,7 +16,7 @@ const dataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 
-  entities: [User, UserProfile, Tenant],
+  entities: [User, UserProfile, UserTenants, Tenant],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
 });
