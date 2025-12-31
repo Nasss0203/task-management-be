@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
+import { TenantModule } from './modules/tenant/tenant.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -25,6 +26,7 @@ import { UsersModule } from './modules/users/users.module';
       isGlobal: true,
     }),
     UsersModule,
+    TenantModule,
   ],
   controllers: [AppController],
   providers: [AppService],
