@@ -7,6 +7,7 @@ import { Role } from '../modules/role/entities/role.entity';
 import { Tenant } from '../modules/tenant/entities/tenant.entity';
 import { User } from '../modules/users/entities/user.entity';
 import { UserProfile } from '../modules/users/entities/user_profile.entity';
+import { UserRole } from '../modules/users/entities/user_role.entity';
 import { UserTenants } from '../modules/users/entities/user_tenants.entity';
 
 config();
@@ -27,6 +28,7 @@ const dataSource = new DataSource({
     Role,
     Permission,
     RolePermission,
+    UserRole,
   ],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
