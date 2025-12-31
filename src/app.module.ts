@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { UsersModule } from './modules/users/users.module';
 import { RoleModule } from './modules/role/role.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -29,6 +30,7 @@ import { RoleModule } from './modules/role/role.module';
     UsersModule,
     TenantModule,
     RoleModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
