@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Permission } from '../modules/permissions/entities/permission.entity';
+import { RefreshToken } from '../modules/refresh-token/entities/refresh-token.entity';
 import { RolePermission } from '../modules/role-permissions/entities/role-permission.entity';
 import { Role } from '../modules/role/entities/role.entity';
 import { Tenant } from '../modules/tenant/entities/tenant.entity';
@@ -29,6 +30,7 @@ const dataSource = new DataSource({
     Permission,
     RolePermission,
     UserRole,
+    RefreshToken,
   ],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,

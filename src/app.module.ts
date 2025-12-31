@@ -8,6 +8,7 @@ import { RolePermissionsModule } from './modules/role-permissions/role-permissio
 import { RoleModule } from './modules/role/role.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { UsersModule } from './modules/users/users.module';
+import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -33,6 +34,7 @@ import { UsersModule } from './modules/users/users.module';
     RoleModule,
     PermissionsModule,
     RolePermissionsModule,
+    RefreshTokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
