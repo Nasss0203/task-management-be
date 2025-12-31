@@ -7,6 +7,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum PlanTypeTenant {
+  FREE = 'free',
+  PRO = 'pro',
+}
+
 @Entity('tenant')
 export class Tenant {
   @PrimaryGeneratedColumn('uuid')
@@ -19,12 +24,12 @@ export class Tenant {
   slug: string;
 
   @Column({
-    type: 'varchar',
-    length: 255,
-    enum: ['free', 'pro'],
+    type: 'enum',
+    enum: PlanTypeTenant,
+    default: PlanTypeTenant.FREE,
     name: 'plan_type',
   })
-  planType: string;
+  planType: PlanTypeTenant;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
