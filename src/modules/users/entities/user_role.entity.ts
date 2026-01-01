@@ -1,4 +1,4 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Role } from '../../role/entities/role.entity';
 import { Tenant } from '../../tenant/entities/tenant.entity';
 import { User } from './user.entity';
@@ -11,8 +11,8 @@ export class UserRole {
   @PrimaryColumn('uuid')
   role_id: string;
 
-  @PrimaryColumn('uuid')
-  tenant_id: string;
+  @Column('uuid', { nullable: true })
+  tenant_id: string | null;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
