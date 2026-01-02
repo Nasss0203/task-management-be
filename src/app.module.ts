@@ -1,15 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 import { RolePermissionsModule } from './modules/role-permissions/role-permissions.module';
 import { RoleModule } from './modules/role/role.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { UsersModule } from './modules/users/users.module';
-import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
-import { AuditLogModule } from './modules/audit-log/audit-log.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -27,6 +29,10 @@ import { AuditLogModule } from './modules/audit-log/audit-log.module';
         logging: true,
       }),
     }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'dev_secret',
+      signOptions: { expiresIn: '15m' },
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -37,6 +43,7 @@ import { AuditLogModule } from './modules/audit-log/audit-log.module';
     RolePermissionsModule,
     RefreshTokenModule,
     AuditLogModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
