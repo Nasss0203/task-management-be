@@ -10,6 +10,7 @@ export class CreateUserDto {
 }
 
 export class RegisterUserDto {
+  id?: string;
   email: string;
   username: string;
   password: string;

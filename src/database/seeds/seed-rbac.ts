@@ -1,7 +1,7 @@
-import 'reflect-metadata';
-
 import * as bcrypt from 'bcrypt';
+import 'reflect-metadata';
 import { IsNull } from 'typeorm';
+
 import { Permission } from '../../modules/permissions/entities/permission.entity';
 import { RolePermission } from '../../modules/role-permissions/entities/role-permission.entity';
 import { Role } from '../../modules/role/entities/role.entity';
@@ -18,17 +18,22 @@ async function seed() {
   const userRepo = dataSource.getRepository(User);
   const userRoleRepo = dataSource.getRepository(UserRole);
 
-  /* =========================
-   * 1. PERMISSIONS
-   * ========================= */
+  // 1️⃣ PERMISSIONS (CỐ ĐỊNH)
   const permissions = [
-    'user:create',
-    'user:update',
-    'user:delete',
-    'role:create',
-    'role:assign',
-    'permission:assign',
-    'tenant:manage',
+    'tenant.manage',
+    'tenant.member.manage',
+
+    'project.create',
+    'project.read',
+    'project.update',
+    'project.delete',
+
+    'task.create',
+    'task.read',
+    'task.update',
+    'task.delete',
+    'task.assign',
+    'task.change_status',
   ];
 
   for (const code of permissions) {
@@ -38,47 +43,40 @@ async function seed() {
     }
   }
 
-  /* =========================
-   * 2. ROLES (SYSTEM ROLES)
-   * tenant_id = null
-   * ========================= */
-  const roles = ['SUPER_ADMIN', 'ADMIN', 'USER'];
+  // 2️⃣ SYSTEM ROLE – CHỈ 1
+  let superAdminRole = await roleRepo.findOne({
+    where: { name: 'SUPER_ADMIN', tenant_id: IsNull() },
+  });
 
-  const roleMap: Record<string, Role> = {};
-
-  for (const name of roles) {
-    let role = await roleRepo.findOne({ where: { name, tenant_id: IsNull() } });
-    if (!role) {
-      role = await roleRepo.save({ name, tenant_id: null });
-    }
-    roleMap[name] = role;
+  if (!superAdminRole) {
+    superAdminRole = await roleRepo.save({
+      name: 'SUPER_ADMIN',
+      tenant_id: null,
+    });
   }
 
-  /* =========================
-   * 3. ROLE ↔ PERMISSION
-   * ========================= */
+  // 3️⃣ SUPER_ADMIN → ALL PERMISSIONS
   const allPermissions = await permissionRepo.find();
 
   for (const perm of allPermissions) {
     const exists = await rolePermRepo.findOne({
       where: {
-        role_id: roleMap['SUPER_ADMIN'].id,
+        role_id: superAdminRole.id,
         permission_id: perm.id,
       },
     });
 
     if (!exists) {
       await rolePermRepo.save({
-        role_id: roleMap['SUPER_ADMIN'].id,
+        role_id: superAdminRole.id,
         permission_id: perm.id,
       });
     }
   }
 
-  /* =========================
-   * 4. ADMIN USER
-   * ========================= */
+  // 4️⃣ SYSTEM ADMIN USER
   const adminEmail = 'admin@system.local';
+
   let admin = await userRepo.findOne({ where: { email: adminEmail } });
 
   if (!admin) {
@@ -86,31 +84,28 @@ async function seed() {
       email: adminEmail,
       username: 'admin',
       passwordHash: await bcrypt.hash('Admin@123', 10),
-      is_active: true,
+      isActive: true,
     });
   }
 
-  /* =========================
-   * 5. USER ↔ ROLE (SYSTEM)
-   * tenant_id = null
-   * ========================= */
-  const adminRoleExists = await userRoleRepo.findOne({
+  // 5️⃣ GÁN SUPER_ADMIN
+  const existsRole = await userRoleRepo.findOne({
     where: {
       user_id: admin.id,
-      role_id: roleMap['SUPER_ADMIN'].id,
+      role_id: superAdminRole.id,
       tenant_id: IsNull(),
     },
   });
 
-  if (!adminRoleExists) {
+  if (!existsRole) {
     await userRoleRepo.save({
       user_id: admin.id,
-      role_id: roleMap['SUPER_ADMIN'].id,
+      role_id: superAdminRole.id,
       tenant_id: null,
     });
   }
 
-  console.log('✅ RBAC seed completed');
+  console.log('✅ System RBAC seeded');
   await dataSource.destroy();
 }
 

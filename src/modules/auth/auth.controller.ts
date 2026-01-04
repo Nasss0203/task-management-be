@@ -32,9 +32,9 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ResponseMessage('Login user successfully!!')
   async login(@Auth() auth: IAuth, @Res({ passthrough: true }) res: Response) {
-    const { refresh_token, ...safeData } = await this.authService.login(auth);
+    const { refreshToken, ...safeData } = await this.authService.login(auth);
 
-    res.cookie('refresh_token', refresh_token, {
+    res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

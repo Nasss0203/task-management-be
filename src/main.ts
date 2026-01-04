@@ -4,7 +4,6 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
-import { JwtAuthGuard } from './common/guard/jwt-auth.guard';
 import { TransformInterceptor } from './common/interceptor/transform.interceptor';
 import { MyLogger } from './log/my.logger';
 
@@ -13,7 +12,8 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
 
-  app.useGlobalGuards(new JwtAuthGuard(reflector));
+  // app.useGlobalGuards(new JwtAuthGuard(reflector));
+  // app.useGlobalGuards(new PermissionGuard(reflector));
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
