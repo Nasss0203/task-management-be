@@ -19,8 +19,8 @@ import { RolePermission } from '../role-permissions/entities/role-permission.ent
 import { Role } from '../role/entities/role.entity';
 import { PlanTypeTenant, Tenant } from '../tenant/entities/tenant.entity';
 import { RegisterUserDto } from '../users/dto/create-user.dto';
+import { UserTenants } from '../users/entities/user-tenants.entity';
 import { User } from '../users/entities/user.entity';
-import { UserTenants } from '../users/entities/user_tenants.entity';
 
 @Injectable()
 export class AuthService {
@@ -144,6 +144,7 @@ export class AuthService {
 
     const payload = {
       sub: user.id,
+      id: user.id,
       email: user.email,
       username: user.username,
       tenantId,

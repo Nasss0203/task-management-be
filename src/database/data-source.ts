@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import 'reflect-metadata';
-import { UserRole } from 'src/modules/users/entities/user_role.entity';
+import { UserRole } from 'src/modules/users/entities/user-role.entity';
 import { DataSource } from 'typeorm';
 import { AuditLog } from '../modules/audit-log/entities/audit-log.entity';
 import { Permission } from '../modules/permissions/entities/permission.entity';
@@ -8,9 +8,9 @@ import { RefreshToken } from '../modules/refresh-token/entities/refresh-token.en
 import { RolePermission } from '../modules/role-permissions/entities/role-permission.entity';
 import { Role } from '../modules/role/entities/role.entity';
 import { Tenant } from '../modules/tenant/entities/tenant.entity';
+import { UserProfile } from '../modules/users/entities/user-profile.entity';
+import { UserTenants } from '../modules/users/entities/user-tenants.entity';
 import { User } from '../modules/users/entities/user.entity';
-import { UserProfile } from '../modules/users/entities/user_profile.entity';
-import { UserTenants } from '../modules/users/entities/user_tenants.entity';
 
 config();
 

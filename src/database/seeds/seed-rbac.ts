@@ -5,8 +5,8 @@ import { IsNull } from 'typeorm';
 import { Permission } from '../../modules/permissions/entities/permission.entity';
 import { RolePermission } from '../../modules/role-permissions/entities/role-permission.entity';
 import { Role } from '../../modules/role/entities/role.entity';
+import { UserRole } from '../../modules/users/entities/user-role.entity';
 import { User } from '../../modules/users/entities/user.entity';
-import { UserRole } from '../../modules/users/entities/user_role.entity';
 import dataSource from '../data-source';
 
 async function seed() {

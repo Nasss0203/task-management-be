@@ -8,6 +8,10 @@ import {
 } from 'typeorm';
 import { Tenant } from '../../tenant/entities/tenant.entity';
 
+export enum RoleName {
+  OWNER = 'OWNER',
+}
+
 @Entity('roles')
 export class Role {
   @PrimaryGeneratedColumn('uuid')

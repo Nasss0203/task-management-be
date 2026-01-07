@@ -1,9 +1,17 @@
 import { genSaltSync, hashSync } from 'bcrypt';
-
+import slugify from 'slugify';
 const hashPassword = (password: string) => {
   const salt = genSaltSync(10);
   const hash = hashSync(password, salt);
   return hash;
+};
+
+export const generateSlug = (text: string): string => {
+  return slugify(text, {
+    lower: true,
+    locale: 'vi',
+    strict: true,
+  });
 };
 
 const ROLE_PERMISSION_MAP: Record<string, string[]> = {

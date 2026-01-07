@@ -1,15 +1,17 @@
+import { PlanTypeTenant } from '../entities/tenant.entity';
+
 export class CreateTenantDto {
-  id: string;
+  id?: string;
 
   name: string;
 
   slug: string;
 
-  planType: string;
+  planType: PlanTypeTenant;
 
-  createdAt: Date;
+  createdAt?: Date;
 
-  updatedAt: Date;
+  updatedAt?: Date;
 
-  deletedAt: Date | null;
+  deletedAt?: Date | null;
 }
