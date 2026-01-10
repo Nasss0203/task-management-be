@@ -5,6 +5,7 @@ import { RoleModule } from '../role/role.module';
 import { UserTenants } from '../users/entities/user-tenants.entity';
 import { UsersModule } from '../users/users.module';
 import { Tenant } from './entities/tenant.entity';
+import { TenantAccessService } from './services/tenant-access.service';
 import { TenantController } from './tenant.controller';
 import { TenantService } from './tenant.service';
 
@@ -15,6 +16,6 @@ import { TenantService } from './tenant.service';
     UsersModule,
   ],
   controllers: [TenantController],
-  providers: [TenantService],
+  providers: [TenantService, TenantAccessService],
 })
 export class TenantModule {}

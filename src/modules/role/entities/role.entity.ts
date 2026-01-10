@@ -10,6 +10,7 @@ import { Tenant } from '../../tenant/entities/tenant.entity';
 
 export enum RoleName {
   OWNER = 'OWNER',
+  MEMBER = 'MEMBER',
 }
 
 @Entity('roles')

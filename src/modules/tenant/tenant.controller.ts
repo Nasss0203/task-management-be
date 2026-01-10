@@ -41,19 +41,37 @@ export class TenantController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
-    return this.tenantService.update(+id, updateTenantDto);
+  @ResponseMessage('Tenant updated successfully')
+  update(
+    @Param('id') id: string,
+    @Body() updateTenantDto: UpdateTenantDto,
+    @Auth() auth: IAuth,
+  ) {
+    return this.tenantService.update({
+      tenantId: id,
+      userId: auth.id,
+      updateTenantDto,
+    });
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.tenantService.remove(+id);
+    return this.tenantService.remove(id);
   }
 
   @Delete('soft-remove/:id')
   @ResponseMessage('Tenant deleted successfully')
   softRemove(@Param('id') tenantId: string, @Auth() auth: IAuth) {
     return this.tenantService.softRemove({
+      tenantId,
+      userId: auth.id,
+    });
+  }
+
+  @Patch('restore/:id')
+  @ResponseMessage('Tenant restored successfully')
+  restore(@Param('id') tenantId: string, @Auth() auth: IAuth) {
+    return this.tenantService.restore({
       tenantId,
       userId: auth.id,
     });

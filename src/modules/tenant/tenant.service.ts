@@ -9,6 +9,7 @@ import { UserTenantService } from '../users/services/user-tenant.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { PlanTypeTenant, Tenant } from './entities/tenant.entity';
+import { TenantAccessService } from './services/tenant-access.service';
 
 @Injectable()
 export class TenantService {
@@ -19,6 +20,7 @@ export class TenantService {
     private userTenantRepo: Repository<UserTenants>,
     private readonly roleSerivce: RoleService,
     private readonly userTenantService: UserTenantService,
+    private readonly tenantAccessService: TenantAccessService,
   ) {}
 
   async create({
@@ -75,7 +77,7 @@ export class TenantService {
     });
 
     if (!userTenant) {
-      return null;
+      throw new ForbiddenException('Access denied');
     }
 
     return {
@@ -88,27 +90,43 @@ export class TenantService {
     };
   }
 
-  update(id: number, updateTenantDto: UpdateTenantDto) {
-    return `This action updates a #${id} tenant`;
+  async update({
+    tenantId,
+    userId,
+    updateTenantDto,
+  }: {
+    tenantId: string;
+    userId: string;
+    updateTenantDto: UpdateTenantDto;
+  }) {
+    await this.tenantAccessService.assertOwner(userId, tenantId);
+
+    await this.tenantRepo.update(tenantId, updateTenantDto);
+
+    return this.tenantRepo.findOneBy({ id: tenantId });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} tenant`;
+  async removeTenant({
+    tenantId,
+    userId,
+  }: {
+    tenantId: string;
+    userId: string;
+  }) {
+    await this.tenantAccessService.assertOwner(userId, tenantId);
+
+    return this.tenantRepo.delete({ id: tenantId });
   }
 
   async softRemove({ tenantId, userId }: { tenantId: string; userId: string }) {
-    const userTenant = await this.userTenantRepo.findOne({
-      where: {
-        userId,
-        tenantId,
-      },
-      relations: ['role'],
-    });
-
-    if (!userTenant || userTenant.role.name !== 'OWNER') {
-      throw new ForbiddenException('Only OWNER can delete tenant');
-    }
+    await this.tenantAccessService.assertOwner(userId, tenantId);
 
     return this.tenantRepo.softRemove({ id: tenantId });
+  }
+
+  async restore({ tenantId, userId }: { tenantId: string; userId: string }) {
+    await this.tenantAccessService.assertOwner(userId, tenantId);
+
+    return this.tenantRepo.restore({ id: tenantId });
   }
 }
