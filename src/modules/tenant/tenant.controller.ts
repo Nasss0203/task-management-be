@@ -87,7 +87,6 @@ export class TenantController {
     return this.tenantService.addMember({
       tenantId,
       userId: body.userId,
-      roleId: body.roleId,
       ownerId: auth.id,
     });
   }

@@ -5,39 +5,44 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { PermissionsService } from 'src/modules/permissions/permissions.service';
+import { TenantAccessService } from 'src/modules/tenant/services/tenant-access.service';
 import { PERMISSIONS_KEY } from '../decorator/permission.decorator';
 
 @Injectable()
-export class PermissionGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+export class PermissionsGuard implements CanActivate {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly tenantAccessService: TenantAccessService,
+    private readonly permissionService: PermissionsService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    // 1️⃣ Lấy permission yêu cầu từ decorator
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const required = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
 
-    // Nếu route không yêu cầu permission → cho qua
-    if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true;
+    if (!required || required.length === 0) return true;
+
+    const req = context.switchToHttp().getRequest();
+
+    const userId: string | undefined = req.user?.id;
+
+    const tenantId: string | undefined = req.params?.id || req.params?.tenantId;
+
+    if (!userId || !tenantId) {
+      throw new ForbiddenException('Missing userId or tenantId');
     }
 
-    // 2️⃣ Lấy user từ request (JWT đã decode)
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
-
-    if (!user || !Array.isArray(user.permissions)) {
-      throw new ForbiddenException('Permissions not found');
-    }
-
-    // 3️⃣ Check permission
-    const hasPermission = requiredPermissions.every((perm) =>
-      user.permissions.includes(perm),
+    const permissionCodes = await this.permissionService.getUserPermissions(
+      userId,
+      tenantId,
     );
 
-    if (!hasPermission) {
-      throw new ForbiddenException('Permission denied');
+    const ok = required.every((p) => permissionCodes.includes(p));
+    if (!ok) {
+      throw new ForbiddenException('Insufficient permissions');
     }
 
     return true;

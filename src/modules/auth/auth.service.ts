@@ -9,14 +9,12 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compareSync } from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
+import { RbacHelper } from 'src/common/helper/rbac-helper';
 import { IAuth } from 'src/types/auth';
 import { hashPassword } from 'src/utils';
 import { Repository } from 'typeorm';
-import { Permission } from '../permissions/entities/permission.entity';
 import { PermissionsService } from '../permissions/permissions.service';
 import { RefreshToken } from '../refresh-token/entities/refresh-token.entity';
-import { RolePermission } from '../role-permissions/entities/role-permission.entity';
-import { Role } from '../role/entities/role.entity';
 import { PlanTypeTenant, Tenant } from '../tenant/entities/tenant.entity';
 import { RegisterUserDto } from '../users/dto/create-user.dto';
 import { UserTenants } from '../users/entities/user-tenants.entity';
@@ -34,12 +32,8 @@ export class AuthService {
     private userTenantRepo: Repository<UserTenants>,
     @InjectRepository(Tenant)
     private tenantRepo: Repository<Tenant>,
-    @InjectRepository(Role)
-    private roleRepo: Repository<Role>,
-    @InjectRepository(Permission)
-    private permissionRepo: Repository<Permission>,
-    @InjectRepository(RolePermission)
-    private rolePermissionRepo: Repository<RolePermission>,
+
+    private readonly rbacHelper: RbacHelper,
 
     private permissionsService: PermissionsService,
   ) {}
@@ -50,7 +44,6 @@ export class AuthService {
     const exists = await this.userRepo.findOne({
       where: [{ email }, { username }],
     });
-
     if (exists) {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
@@ -68,32 +61,7 @@ export class AuthService {
       planType: PlanTypeTenant.FREE,
     });
 
-    let ownerRole = await this.roleRepo.findOne({
-      where: {
-        name: 'OWNER',
-        tenant_id: tenant.id,
-      },
-    });
-
-    if (!ownerRole) {
-      ownerRole = await this.roleRepo.save({
-        name: 'OWNER',
-        tenant_id: tenant.id,
-      });
-    }
-
-    const permissions = await this.permissionRepo.find();
-
-    if (permissions.length === 0) {
-      throw new Error('Permissions not seeded');
-    }
-
-    await this.rolePermissionRepo.save(
-      permissions.map((p) => ({
-        role_id: ownerRole.id,
-        permission_id: p.id,
-      })),
-    );
+    const { ownerRole } = await this.rbacHelper.ensureTenantRoles(tenant.id);
 
     await this.userTenantRepo.save({
       userId: user.id,
@@ -102,11 +70,7 @@ export class AuthService {
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
+      user: { id: user.id, email: user.email, username: user.username },
       tenant: {
         id: tenant.id,
         name: tenant.name,
@@ -126,6 +90,7 @@ export class AuthService {
 
     const userTenant = await this.userTenantRepo.findOne({
       where: { userId: user.id },
+      order: { joinedAt: 'DESC' },
     });
 
     if (!userTenant) {
@@ -137,11 +102,12 @@ export class AuthService {
 
     const tenantId = userTenant.tenantId;
 
+    await this.rbacHelper.ensureTenantRoles(tenantId);
+
     const permissionCodes = await this.permissionsService.getUserPermissions(
       user.id,
       tenantId,
     );
-    console.log('🚀 ~ permissionCodes~', permissionCodes);
 
     const payload = {
       sub: user.id,
@@ -167,20 +133,17 @@ export class AuthService {
       username: user.username,
       accessToken,
       refreshToken,
-      context: {
-        tenantId,
-        permissions: permissionCodes,
-      },
+      context: { tenantId, permissions: permissionCodes },
     };
   }
 
   private async buildAuthContext(userId: string) {
     const rows = await this.userRepo.query(
       `
-    SELECT tenant_id, role_id
+    SELECT tenant_id
     FROM user_tenants
     WHERE user_id = $1
-    ORDER BY joined_at ASC
+    ORDER BY joined_at DESC
     LIMIT 1
     `,
       [userId],
@@ -190,21 +153,18 @@ export class AuthService {
       throw new ForbiddenException('User does not belong to any tenant');
     }
 
-    const { tenant_id, role_id } = rows[0];
+    const tenantId: string = rows[0].tenant_id;
 
-    const permissions = await this.userRepo.query(
-      `
-    SELECT DISTINCT p.code
-    FROM role_permissions rp
-    JOIN permissions p ON p.id = rp.permission_id
-    WHERE rp.role_id = $1
-    `,
-      [role_id],
+    await this.rbacHelper.ensureTenantRoles(tenantId);
+
+    const permissionCodes = await this.permissionsService.getUserPermissions(
+      userId,
+      tenantId,
     );
 
     return {
-      tenantId: tenant_id,
-      permissions: permissions.map((p) => p.code),
+      tenantId,
+      permissions: permissionCodes,
     };
   }
 

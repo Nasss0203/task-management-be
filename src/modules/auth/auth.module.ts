@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RbacHelper } from 'src/common/helper/rbac-helper';
 import { JwtStrategy } from 'src/common/strategy/jwt.strategy';
 import { LocalStrategy } from 'src/common/strategy/local.strategy';
 import { Permission } from '../permissions/entities/permission.entity';
@@ -43,7 +44,8 @@ import { AuthService } from './auth.service';
     PassportModule,
     PermissionsModule,
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RbacHelper],
   controllers: [AuthController],
+  exports: [RbacHelper],
 })
 export class AuthModule {}

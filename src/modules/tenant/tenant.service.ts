@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RbacHelper } from 'src/common/helper/rbac-helper';
 import { generateSlug } from 'src/utils';
 import { Repository } from 'typeorm';
 import { RoleName } from '../role/entities/role.entity';
@@ -29,6 +30,7 @@ export class TenantService {
     private readonly userTenantService: UserTenantService,
     private readonly tenantAccessService: TenantAccessService,
     private readonly userService: UsersService,
+    private readonly rbacHelper: RbacHelper,
   ) {}
 
   async create({
@@ -46,9 +48,12 @@ export class TenantService {
       planType: PlanTypeTenant.FREE,
     });
 
-    const ownerRole = await this.roleSerivce.create({
-      tenant_id: newTenant.id,
-      name: RoleName.OWNER,
+    const { ownerRole } = await this.rbacHelper.ensureTenantRoles(newTenant.id);
+
+    await this.userTenantService.create({
+      userId,
+      tenantId: newTenant.id,
+      roleId: ownerRole.id,
     });
 
     await this.userTenantService.create({
@@ -141,20 +146,15 @@ export class TenantService {
   async addMember({
     tenantId,
     userId,
-    roleId,
     ownerId,
   }: {
     tenantId: string;
     userId: string;
-    roleId: string;
     ownerId: string;
   }) {
     await this.tenantAccessService.assertOwner(ownerId, tenantId);
 
     await this.userService.findOne(userId);
-
-    // ✅ lấy roleId cuối cùng (default MEMBER nếu roleId rỗng)
-    const finalRoleId = await this.roleSerivce.findOne(roleId);
 
     const existed = await this.userTenantRepo.findOneBy({ userId, tenantId });
     if (existed) {
@@ -164,13 +164,14 @@ export class TenantService {
       );
     }
 
-    const membership = this.userTenantRepo.create({
+    // ✅ luôn lấy MEMBER role đúng tenant + đảm bảo permissions
+    const { memberRole } = await this.rbacHelper.ensureTenantRoles(tenantId);
+
+    return this.userTenantRepo.save({
       tenantId,
       userId,
-      roleId: finalRoleId,
+      roleId: memberRole.id,
     });
-
-    return this.userTenantRepo.save(membership);
   }
 
   async getMemberTenants({

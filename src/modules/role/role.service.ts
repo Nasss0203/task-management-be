@@ -40,7 +40,6 @@ export class RoleService {
       }
       finalRoleId = memberRole.id;
     } else {
-      // nếu có truyền roleId thì validate tồn tại
       await this.roleRepo.findOne({ where: { id: finalRoleId } });
     }
     return finalRoleId;

@@ -29,7 +29,6 @@ export class PermissionsService {
       `,
       [userId, tenantId],
     );
-    console.log('🚀 ~ rows~', rows);
 
     return rows.map((r) => r.code);
   }

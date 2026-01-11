@@ -18,7 +18,6 @@ async function seed() {
   const userRepo = dataSource.getRepository(User);
   const userRoleRepo = dataSource.getRepository(UserRole);
 
-  // 1️⃣ PERMISSIONS (CỐ ĐỊNH)
   const permissions = [
     'tenant.manage',
     'tenant.member.manage',

@@ -5,7 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './common/guard/jwt-auth.guard';
-import { PermissionGuard } from './common/guard/permission.guard';
+import { PermissionsGuard } from './common/guard/permission.guard';
 import { DatabaseModule } from './database/database.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -43,7 +43,7 @@ import { UsersModule } from './modules/users/users.module';
     },
     {
       provide: APP_GUARD,
-      useClass: PermissionGuard,
+      useClass: PermissionsGuard,
     },
   ],
 })
