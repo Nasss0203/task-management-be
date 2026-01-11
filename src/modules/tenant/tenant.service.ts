@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { generateSlug } from 'src/utils';
 import { Repository } from 'typeorm';
@@ -6,6 +11,7 @@ import { RoleName } from '../role/entities/role.entity';
 import { RoleService } from '../role/role.service';
 import { UserTenants } from '../users/entities/user-tenants.entity';
 import { UserTenantService } from '../users/services/user-tenant.service';
+import { UsersService } from '../users/users.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { PlanTypeTenant, Tenant } from './entities/tenant.entity';
@@ -18,9 +24,11 @@ export class TenantService {
     private tenantRepo: Repository<Tenant>,
     @InjectRepository(UserTenants)
     private userTenantRepo: Repository<UserTenants>,
+
     private readonly roleSerivce: RoleService,
     private readonly userTenantService: UserTenantService,
     private readonly tenantAccessService: TenantAccessService,
+    private readonly userService: UsersService,
   ) {}
 
   async create({
@@ -128,5 +136,114 @@ export class TenantService {
     await this.tenantAccessService.assertOwner(userId, tenantId);
 
     return this.tenantRepo.restore({ id: tenantId });
+  }
+
+  async addMember({
+    tenantId,
+    userId,
+    roleId,
+    ownerId,
+  }: {
+    tenantId: string;
+    userId: string;
+    roleId: string;
+    ownerId: string;
+  }) {
+    await this.tenantAccessService.assertOwner(ownerId, tenantId);
+
+    await this.userService.findOne(userId);
+
+    // ✅ lấy roleId cuối cùng (default MEMBER nếu roleId rỗng)
+    const finalRoleId = await this.roleSerivce.findOne(roleId);
+
+    const existed = await this.userTenantRepo.findOneBy({ userId, tenantId });
+    if (existed) {
+      throw new HttpException(
+        'User is already a member of this tenant',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const membership = this.userTenantRepo.create({
+      tenantId,
+      userId,
+      roleId: finalRoleId,
+    });
+
+    return this.userTenantRepo.save(membership);
+  }
+
+  async getMemberTenants({
+    ownerId,
+    tenantId,
+  }: {
+    ownerId: string;
+    tenantId: string;
+  }) {
+    await this.tenantAccessService.assertOwner(ownerId, tenantId);
+
+    const rows = await this.userTenantRepo.find({
+      where: { tenantId },
+      relations: { user: true, role: true }, // để lấy thông tin user + role
+      order: { joinedAt: 'ASC' },
+    });
+
+    const membersOnly = rows.filter((r) => r.role?.name !== RoleName.OWNER);
+
+    return membersOnly.map((m) => ({
+      userId: m.userId,
+      user: {
+        id: m.user?.id,
+        email: m.user?.email,
+        username: m.user?.username,
+      },
+      role: {
+        id: m.role?.id,
+        name: m.role?.name,
+      },
+      joinedAt: m.joinedAt,
+    }));
+  }
+
+  async removeMember({
+    ownerId,
+    tenantId,
+    memberUserId,
+  }: {
+    ownerId: string;
+    tenantId: string;
+    memberUserId: string;
+  }) {
+    // 1) chỉ owner được xóa
+    await this.tenantAccessService.assertOwner(ownerId, tenantId);
+
+    // 2) tìm membership
+    const membership = await this.userTenantRepo.findOne({
+      where: {
+        tenantId,
+        userId: memberUserId,
+      },
+      relations: { role: true },
+    });
+
+    if (!membership) {
+      throw new HttpException(
+        'Member not found in this tenant',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // 3) không cho xóa OWNER
+    if (membership.role?.name === RoleName.OWNER) {
+      throw new HttpException(
+        'Cannot remove tenant owner',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // 4) xóa
+    await this.userTenantRepo.remove(membership);
+
+    return { success: true };
   }
 }

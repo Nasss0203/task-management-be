@@ -141,6 +141,7 @@ export class AuthService {
       user.id,
       tenantId,
     );
+    console.log('🚀 ~ permissionCodes~', permissionCodes);
 
     const payload = {
       sub: user.id,

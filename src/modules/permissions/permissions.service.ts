@@ -16,6 +16,8 @@ export class PermissionsService {
     userId: string,
     tenantId: string,
   ): Promise<string[]> {
+    console.log('🚀 ~ tenantId~', tenantId);
+    console.log('🚀 ~ userId~', userId);
     const rows = await this.userTenantRepo.query(
       `
       SELECT DISTINCT p.code
@@ -27,6 +29,7 @@ export class PermissionsService {
       `,
       [userId, tenantId],
     );
+    console.log('🚀 ~ rows~', rows);
 
     return rows.map((r) => r.code);
   }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -24,8 +24,26 @@ export class RoleService {
     return `This action returns all role`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
+  async findOne(id: string) {
+    let finalRoleId = id?.trim();
+
+    if (!finalRoleId) {
+      const memberRole = await this.roleRepo.findOne({
+        where: { name: RoleName.MEMBER },
+      });
+      // bạn implement findByCodeOrName() theo schema role của bạn
+      if (!memberRole) {
+        throw new HttpException(
+          'Default MEMBER role not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      finalRoleId = memberRole.id;
+    } else {
+      // nếu có truyền roleId thì validate tồn tại
+      await this.roleRepo.findOne({ where: { id: finalRoleId } });
+    }
+    return finalRoleId;
   }
 
   update(id: number, updateRoleDto: UpdateRoleDto) {

@@ -56,7 +56,7 @@ export class TenantController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.tenantService.remove(id);
+    // return this.tenantService.remove(id);
   }
 
   @Delete('soft-remove/:id')
@@ -74,6 +74,44 @@ export class TenantController {
     return this.tenantService.restore({
       tenantId,
       userId: auth.id,
+    });
+  }
+
+  @Post('add-member/:id')
+  @ResponseMessage('Member added to tenant successfully')
+  addMember(
+    @Auth() auth: IAuth,
+    @Param('id') tenantId: string,
+    @Body() body: { userId: string; roleId: string },
+  ) {
+    return this.tenantService.addMember({
+      tenantId,
+      userId: body.userId,
+      roleId: body.roleId,
+      ownerId: auth.id,
+    });
+  }
+
+  @Get(':id/members')
+  @ResponseMessage('Tenant members fetched successfully')
+  getMembers(@Auth() auth: IAuth, @Param('id') tenantId: string) {
+    return this.tenantService.getMemberTenants({
+      ownerId: auth.id,
+      tenantId,
+    });
+  }
+
+  @Delete(':id/members/:memberUserId')
+  @ResponseMessage('Member removed from tenant successfully')
+  removeMember(
+    @Auth() auth: IAuth,
+    @Param('id') tenantId: string,
+    @Param('memberUserId') memberUserId: string,
+  ) {
+    return this.tenantService.removeMember({
+      ownerId: auth.id,
+      tenantId,
+      memberUserId,
     });
   }
 }
